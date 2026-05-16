@@ -18,8 +18,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ========== ELEMENTOS DEL DOM ==========
     const tabs = document.querySelectorAll('.tab');
-    const addUserBtn = document.querySelector('button:first-of-type');
-    const tableBody = document.querySelector('table tbody');
+    const addUserBtn = document.getElementById('btn_nuevo_usuario');
+    const tableBody = document.getElementById('users-table-body');
     const modalOverlay = document.getElementById('user-modal');
     const modalForm = document.getElementById('user-form');
     const modalTitle = document.getElementById('modal-title');
@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const userRoleSelect = document.getElementById('user-role-select');
     const userPasswordInput = document.getElementById('user-password-input');
 
+    const BASE_URL = 'http://localhost:3001';
     let currentTab = 'usuarios'; // usuarios o trabajadores
     let editingUserId = null;
     // Almacén centralizado para los datos de ambas pestañas
@@ -97,6 +98,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const loadData = async (type) => {
         if (!checkAuthentication()) return;
         const endpoint = type === 'usuarios' ? '/api/usuarios' : '/api/trabajadores';
+        const endpoint = type === 'usuarios' ? `${BASE_URL}/api/usuarios` : `${BASE_URL}/api/trabajadores`;
 
         try {
             const token = getAuthToken();
@@ -176,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function () {
             userPasswordInput.placeholder = 'Crear una contraseña segura';
         }
         if (modalOverlay) modalOverlay.style.display = 'block';
-        userRoleSelect.value = 'usuario'; // Valor por defecto
+        if (userRoleSelect) userRoleSelect.value = 'usuario'; // Valor por defecto
     };
 
     /**
@@ -279,6 +281,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const method = editingUserId ? 'PUT' : 'POST';
             const url = editingUserId
                 ? `/api/usuarios/${editingUserId}` : '/api/usuarios';
+                ? `${BASE_URL}/api/usuarios/${editingUserId}` : `${BASE_URL}/api/usuarios`;
 
             const response = await fetch(url, {
                 method: method,
@@ -321,6 +324,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // BUG CORREGIDO: Siempre se elimina a través de la ruta de usuarios,
             // ya que el backend está configurado para borrar el trabajador asociado.
             const response = await fetch(`/api/usuarios/${userId}`, {
+            const response = await fetch(`${BASE_URL}/api/usuarios/${userId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -370,7 +374,7 @@ document.addEventListener('DOMContentLoaded', function () {
             tab.classList.add('active');
 
             // Cambiar tab actual
-            currentTab = tab.textContent.toLowerCase() === 'usuarios' ? 'usuarios' : 'trabajadores';
+            currentTab = tab.id === 'user' ? 'usuarios' : 'trabajadores';
 
             // Cargar datos del tab
             loadData(currentTab);
