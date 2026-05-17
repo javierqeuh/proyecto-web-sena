@@ -48,10 +48,17 @@ export const uploadProfilePicture = async (req, res) => {
 // atualizar usuario
 export const updateUser = async (req, res) => {
   const { nombre, apellidos, email, rol, password, cedula, fecha_nacimiento } = req.body;
+  const foto_perfil = req.file ? req.file.filename : null; // Capturamos la foto si existe
+
   try {
     let query = 'UPDATE usuario SET nombre = ?, apellidos = ?, email = ?, cedula = ?, fecha_nacimiento = ?';
     const params = [nombre, apellidos, email, cedula, fecha_nacimiento];
     
+    if (foto_perfil) {
+      query += ', foto_perfil = ?';
+      params.push(foto_perfil);
+    }
+
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
       query += ', password_hash = ?';
@@ -61,9 +68,18 @@ export const updateUser = async (req, res) => {
     if (rol) { query += ', rol = ?'; params.push(rol); }
     query += ' WHERE id_usuario = ?';
     params.push(req.params.id);
+
     await db.execute(query, params);
-    res.json({ message: 'Usuario actualizado correctamente.' });
+
+    // Consultar el usuario actualizado para devolverlo al frontend
+    const [updatedUser] = await db.execute('SELECT id_usuario, nombre, apellidos, email, rol, foto_perfil FROM usuario WHERE id_usuario = ?', [req.params.id]);
+    
+    res.json({ 
+      message: 'Usuario actualizado correctamente.',
+      user: updatedUser[0] 
+    });
   } catch (error) {
+    console.error('Error al actualizar usuario:', error);
     res.status(500).json({ message: 'Error actualizando usuario.' });
   }
 };

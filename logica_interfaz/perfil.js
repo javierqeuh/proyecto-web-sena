@@ -151,6 +151,16 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             profileHeaderName.textContent = nombreCompleto || 'Mi Perfil';
         }
+
+        // Mostrar la foto de perfil si existe en los datos del usuario
+        const profilePicturePreview = document.getElementById('profile-picture-preview');
+        if (profilePicturePreview && user.foto_perfil) {
+            // Ajusta la URL según la carpeta donde tu backend sirva las imágenes (ej: /uploads/)
+            const imageUrl = user.foto_perfil.startsWith('http') 
+                ? user.foto_perfil 
+                : `http://localhost:3001/uploads/${user.foto_perfil}`;
+            profilePicturePreview.src = imageUrl;
+        }
     };
 
     /**
@@ -214,34 +224,41 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const userData = getUserData();
 
-            // Datos a enviar al backend
-            const updatedData = {
-                nombre: profileNombreInput?.value.trim(),
-                apellidos: profileApellidosInput?.value.trim(),
-                email: profileEmailInput?.value.trim()
-            };
+            // Cambiamos a FormData para poder enviar el archivo de imagen
+            const formData = new FormData();
+            formData.append('nombre', profileNombreInput?.value.trim());
+            formData.append('apellidos', profileApellidosInput?.value.trim());
+            formData.append('email', profileEmailInput?.value.trim());
+
+            // Capturamos el archivo del input si el usuario seleccionó uno
+            const profilePictureInput = document.getElementById('profile-picture-input');
+            if (profilePictureInput && profilePictureInput.files[0]) {
+                formData.append('foto_perfil', profilePictureInput.files[0]);
+            }
 
             const token = getAuthToken();
-            // Petición PUT real a la base de datos
             const response = await fetch(`http://localhost:3001/api/usuarios/${userData.id_usuario}`, {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json',
+                    // ¡IMPORTANTE!: No definas Content-Type manualmente al usar FormData.
+                    // El navegador lo hará automáticamente incluyendo el "boundary".
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(updatedData)
+                body: formData
             });
 
             if (!response.ok) throw new Error('Error al actualizar en el servidor');
 
-            // Guardar datos actualizados en localStorage
-            const newUserData = { ...userData, ...updatedData };
+            const result = await response.json();
+            
+            // Actualizar caché local con la respuesta del servidor (que ya trae la nueva URL de la foto)
+            const newUserData = { ...userData, ...result.user };
             localStorage.setItem('userData', JSON.stringify(newUserData));
 
             // Actualizar información visual en el sidebar inmediatamente
             const sidebarNameEl = document.querySelector('.user-info h3');
             if (sidebarNameEl) {
-                sidebarNameEl.textContent = `${updatedData.nombre} ${updatedData.apellidos || ''}`.trim();
+                sidebarNameEl.textContent = `${newUserData.nombre} ${newUserData.apellidos || ''}`.trim();
             }
 
             window.showAppNotification('Perfil actualizado correctamente.', 'success');
