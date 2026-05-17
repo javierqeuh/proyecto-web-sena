@@ -275,6 +275,14 @@ document.addEventListener('DOMContentLoaded', function () {
      const profilePictureInput = document.getElementById('profile-picture-input');
      const profilePicturePreview = document.getElementById('profile-picture-preview');
         if (profilePictureInput && profilePicturePreview) {
+            // ACCIÓN: Al hacer clic en la foto o en el botón, abrir el selector de archivos
+            profilePicturePreview.addEventListener('click', () => profilePictureInput.click());
+            
+            const changePhotoBtn = document.getElementById('change-photo-btn');
+            if (changePhotoBtn) {
+                changePhotoBtn.addEventListener('click', () => profilePictureInput.click());
+            }
+
             profilePictureInput.addEventListener('change', function () {
                 const file = this.files[0];
                 if (file) {

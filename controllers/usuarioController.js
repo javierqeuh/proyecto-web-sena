@@ -1,6 +1,10 @@
 import db from '../config/db.js';
 import bcrypt from 'bcrypt';
-// otener usuarios
+
+/**
+ * Obtiene todos los usuarios de la base de datos.
+ * Selecciona solo campos necesarios para no exponer el hash de la contraseña.
+ */
 export const getAllUsers = async (req, res) => {
   try {
     const [usuarios] = await db.execute('SELECT id_usuario, nombre, apellidos, email, rol, activo, cedula, fecha_nacimiento FROM usuario');
@@ -9,7 +13,11 @@ export const getAllUsers = async (req, res) => {
     res.status(500).json({ message: 'Error obteniendo usuarios.' });
   }
 };
-// obtener trabajadores
+
+/**
+ * Obtiene el listado de trabajadores realizando un JOIN con la tabla de usuarios.
+ * Esto permite tener el email y estado de cuenta junto a los datos laborales.
+ */
 export const getAllWorkers = async (req, res) => {
   try {
     const [trabajadores] = await db.execute(`
@@ -21,10 +29,13 @@ export const getAllWorkers = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener trabajadores.' });
   }
 };
-// informacion para perfil
+
+/**
+ * Obtiene la información detallada de un usuario específico por su ID.
+ */
 export const getUserById = async (req, res) => {
   try {
-    const [users] = await db.execute('SELECT id_usuario, nombre, apellidos, cedula, fecha_nacimiento, email, rol, activo FROM usuario WHERE id_usuario = ?', [req.params.id]);
+    const [users] = await db.execute('SELECT id_usuario, nombre, apellidos, cedula, fecha_nacimiento, email, rol, activo, foto_perfil FROM usuario WHERE id_usuario = ?', [req.params.id]);
     if (users.length === 0) return res.status(404).json({ message: 'Usuario no encontrado' });
     res.json({ data: users[0] });
   } catch (error) {
@@ -32,7 +43,10 @@ export const getUserById = async (req, res) => {
   }
 };
 
-// cargar foto perfil
+/**
+ * Actualiza la ruta de la foto de perfil en la base de datos.
+ * El archivo físico ya fue procesado por Multer previamente.
+ */
 export const uploadProfilePicture = async (req, res) => {
   const { id } = req.params;
   if (!req.file) return res.status(400).json({ message: 'No se ha subido ningún archivo.' });
@@ -45,33 +59,39 @@ export const uploadProfilePicture = async (req, res) => {
   }
 };
 
-// atualizar usuario
+/**
+ * Actualiza los datos de un usuario.
+ * Implementa lógica dinámica: solo actualiza los campos que se envían en el cuerpo de la petición.
+ * Maneja el hasheo de la contraseña si se decide cambiarla.
+ */
 export const updateUser = async (req, res) => {
   const { nombre, apellidos, email, rol, password, cedula, fecha_nacimiento } = req.body;
-  const foto_perfil = req.file ? req.file.filename : null; // Capturamos la foto si existe
+  const foto_perfil = req.file ? req.file.filename : null; 
 
   try {
-    let query = 'UPDATE usuario SET nombre = ?, apellidos = ?, email = ?, cedula = ?, fecha_nacimiento = ?';
-    const params = [nombre, apellidos, email, cedula, fecha_nacimiento];
+    // Construcción de la consulta dinámica
+    let query = 'UPDATE usuario SET nombre = ?, apellidos = ?, email = ?';
+    const params = [nombre, apellidos, email];
     
     if (foto_perfil) {
       query += ', foto_perfil = ?';
       params.push(foto_perfil);
     }
-
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
       query += ', password_hash = ?';
       params.push(hashedPassword);
     }
-
+    if (cedula) { query += ', cedula = ?'; params.push(cedula); }
+    if (fecha_nacimiento) { query += ', fecha_nacimiento = ?'; params.push(fecha_nacimiento); }
     if (rol) { query += ', rol = ?'; params.push(rol); }
+
     query += ' WHERE id_usuario = ?';
     params.push(req.params.id);
 
     await db.execute(query, params);
 
-    // Consultar el usuario actualizado para devolverlo al frontend
+    // Retornamos el usuario actualizado para sincronizar el estado en el frontend
     const [updatedUser] = await db.execute('SELECT id_usuario, nombre, apellidos, email, rol, foto_perfil FROM usuario WHERE id_usuario = ?', [req.params.id]);
     
     res.json({ 
@@ -83,7 +103,11 @@ export const updateUser = async (req, res) => {
     res.status(500).json({ message: 'Error actualizando usuario.' });
   }
 };
-// crear usuario desde gestin de usuario
+
+/**
+ * Crea un nuevo usuario.
+ * Si el rol seleccionado es 'trabajador', inserta automáticamente en la tabla correspondiente.
+ */
 export const createUser = async (req, res) => {
   const { nombre, apellidos, email, password, rol, cedula, fecha_nacimiento } = req.body;
   try {
@@ -96,6 +120,7 @@ export const createUser = async (req, res) => {
       'INSERT INTO usuario (nombre, apellidos, email, password_hash, rol, activo, fecha_registro, cedula, fecha_nacimiento) VALUES (?, ?, ?, ?, ?, 1, CURDATE(), ?, ?)', 
       [nombre, apellidos, email, hashedPassword, rol, cedula, fecha_nacimiento]);
     
+    // Lógica de integridad para roles de trabajador
     if (rol === 'trabajador') {
       const id_usuario = result.insertId;
       await db.execute(
@@ -110,10 +135,15 @@ export const createUser = async (req, res) => {
     res.status(500).json({ message: 'Error creando usuario.' });
   }
 };
-// eliminar usuario 
+
+/**
+ * Elimina un usuario del sistema.
+ * Se encarga de borrar primero la referencia en la tabla trabajador para mantener la integridad referencial.
+ */
 export const deleteUser = async (req, res) => {
   const { id } = req.params;
   try {
+    // Borrado manual de dependencias antes del usuario
     await db.execute('DELETE FROM trabajador WHERE id_usuario = ?', [id]);
     const [result] = await db.execute('DELETE FROM usuario WHERE id_usuario = ?', [id]);
     if (result.affectedRows === 0) return res.status(404).json({ message: 'Usuario no encontrado.' });
@@ -122,7 +152,10 @@ export const deleteUser = async (req, res) => {
     res.status(500).json({ message: 'Error al eliminar el usuario.' });
   }
 };
-// eliminar trabajador
+
+/**
+ * Elimina solo el perfil de trabajador sin borrar la cuenta de usuario.
+ */
 export const deleteWorker = async (req, res) => {
   const { id } = req.params;
   try {

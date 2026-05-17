@@ -50,6 +50,13 @@ app.use(express.static(path.join(__dirname, 'html_interfaz')));
 app.use('/img', express.static(path.join(__dirname, 'img')));
 // Sirve la lógica de la interfaz (JS)
 app.use('/logica_interfaz', express.static(path.join(__dirname, 'logica_interfaz')));
+// Sirve las imágenes de perfil subidas
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+app.use('/uploads', express.static(uploadsDir));
+
 
 
 // 6. Rutas de la API (Centralizadas)

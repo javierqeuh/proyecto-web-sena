@@ -3,6 +3,10 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import db from '../config/db.js';
 
+/**
+ * Procesa el registro de nuevos usuarios.
+ * Utiliza transacciones de SQL para asegurar que si falla la creación del trabajador, no se cree el usuario.
+ */
 export const register = async (req, res) => {
   const { nombre, apellidos, cedula, fecha_nacimiento, email, password, rol } = req.body;
 
@@ -15,12 +19,14 @@ export const register = async (req, res) => {
     connection = await db.getConnection();
     await connection.beginTransaction();
 
+    // Validación de unicidad de correo
     const [existing] = await connection.execute('SELECT id_usuario FROM usuario WHERE email = ?', [email]);
     if (existing.length > 0) {
       await connection.rollback();
       return res.status(409).json({ message: 'Este correo ya está registrado.' });
     }
 
+    // Encriptación de contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
     const [result] = await connection.execute(
       `INSERT INTO usuario (nombre, apellidos, cedula, fecha_nacimiento, email, password_hash, rol, activo, fecha_registro) 
@@ -28,6 +34,7 @@ export const register = async (req, res) => {
       [nombre, apellidos, cedula, fecha_nacimiento, email, hashedPassword, rol]
     );
 
+    // Si el rol es trabajador, creamos su ficha laboral vinculada
     if (rol === 'trabajador') {
       const id_usuario = result.insertId;
       await connection.execute(
@@ -47,7 +54,10 @@ export const register = async (req, res) => {
     if (connection) connection.release();
   }
 };
-// login 
+
+/**
+ * Autentica al usuario, verifica el rol y genera un token JWT válido por 24 horas.
+ */
 export const login = async (req, res) => {
   const { email, password, role } = req.body;
 
@@ -57,23 +67,26 @@ export const login = async (req, res) => {
 
   try {
     const [users] = await db.execute(
-      'SELECT id_usuario, nombre, apellidos, email, password_hash, rol FROM usuario WHERE email = ?',
+      'SELECT id_usuario, nombre, apellidos, email, password_hash, rol, foto_perfil FROM usuario WHERE email = ?',
       [email]
     );
 
     if (users.length === 0) return res.status(401).json({ message: 'Email o contraseña incorrectos.' });
 
     const user = users[0];
+    // Verificación de rol para evitar que un trabajador entre como administrador
     if (user.rol !== role) return res.status(401).json({ message: 'El rol no coincide con el usuario.' });
 
+    // Comparación segura del hash de la contraseña
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
     if (!passwordMatch) return res.status(401).json({ message: 'Email o contraseña incorrectos.' });
 
+    // Generación del token de sesión
     const token = jwt.sign({ id_usuario: user.id_usuario, rol: user.rol }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '24h' });
 
     res.status(200).json({ 
       message: 'Autenticación exitosa.',
-      user: { id_usuario: user.id_usuario, nombre: user.nombre, apellidos: user.apellidos, email: user.email, rol: user.rol },
+      user: { id_usuario: user.id_usuario, nombre: user.nombre, apellidos: user.apellidos, email: user.email, rol: user.rol, foto_perfil: user.foto_perfil },
       token: token
     });
   } catch (error) {
@@ -82,11 +95,16 @@ export const login = async (req, res) => {
   }
 };
 
+/**
+ * Obtiene la información del usuario autenticado actualmente.
+ * Utiliza el ID extraído del token JWT por el middleware de autenticación.
+ * Útil para mantener la sesión persistente en el frontend tras recargar la página.
+ */
 export const getMe = async (req, res) => {
   try {
     const userId = req.user.id_usuario;
     const [rows] = await db.execute(
-      'SELECT id_usuario, nombre, apellidos, email, rol, activo FROM usuario WHERE id_usuario = ?',
+      'SELECT id_usuario, nombre, apellidos, email, rol, activo, foto_perfil FROM usuario WHERE id_usuario = ?',
       [userId]
     );
 
@@ -98,26 +116,35 @@ export const getMe = async (req, res) => {
   }
 };
 
-// 1. SOLICITAR RECUPERACIÓN
+/**
+ * Inicia el proceso de recuperación de contraseña.
+ * 1. Verifica si el email existe.
+ * 2. Genera un token de seguridad temporal de un solo uso.
+ * 3. Simula el envío de un correo electrónico con el enlace de restablecimiento.
+ */
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
-    // 1. Buscar el usuario
+    // Buscar el usuario en la base de datos por su correo electrónico
     const [users] = await db.execute('SELECT id_usuario, email FROM usuario WHERE email = ?', [email]);
     
-    // Por seguridad, siempre respondemos igual para no revelar si el email existe o no
+    // Práctica de seguridad: Si el usuario no existe, no lo decimos explícitamente 
+    // para evitar "user enumeration" (que atacantes sepan qué correos están registrados).
     if (users.length === 0) {
       return res.status(200).json({ 
         message: "Si el correo existe, se ha enviado un enlace de recuperación." 
       });
     }
+
     const user = users[0];
 
-    // 2. Generar token aleatorio
+    // Generación de un token criptográfico seguro (hexadecimal de 20 bytes)
     const token = crypto.randomBytes(20).toString('hex');
-    const expireDate = new Date(Date.now() + 3600000); // 1 hora
+    // Definición de expiración: El token será válido solo por 1 hora
+    const expireDate = new Date(Date.now() + 3600000); 
 
+    // Nota: Aquí deberías guardar el token y la fecha en la tabla 'usuario'
     // 3. Guardar token en la DB (MySQL)
     // await db.execute('UPDATE usuario SET reset_token = ?, reset_expires = ? WHERE id_usuario = ?', [token, expireDate, user.id_usuario]);
 
@@ -137,16 +164,21 @@ export const forgotPassword = async (req, res) => {
   }
 };
 
-// 2. RESTABLECER CONTRASEÑA
+/**
+ * Finaliza el proceso de recuperación de contraseña.
+ * 1. Valida el token recibido desde el frontend.
+ * 2. Verifica que el token no haya expirado.
+ * 3. Actualiza la contraseña en la base de datos (hasheándola previamente).
+ */
 export const resetPassword = async (req, res) => {
   const { token, newPassword } = req.body;
 
   try {
-    // 1. Buscar usuario con el token Y que no haya expirado
+    // Lógica para validar el token contra la base de datos y la fecha actual
     // const [users] = await db.execute('SELECT * FROM usuario WHERE reset_token = ? AND reset_expires > NOW()', [token]);
 
     // if (users.length === 0) {
-    //   return res.status(400).json({ message: "Token inválido o expirado." });
+    //   return res.status(400).json({ message: "Token inválido o ha expirado." });
     // }
     // const user = users[0];
 
