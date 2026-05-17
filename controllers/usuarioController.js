@@ -3,9 +3,8 @@ import bcrypt from 'bcrypt';
 // otener usuarios
 export const getAllUsers = async (req, res) => {
   try {
-    const [users] = await db.execute('SELECT id_usuario, nombre, apellidos, email, rol, activo FROM usuario');
-    const [users] = await db.execute('SELECT id_usuario, nombre, apellidos, email, rol, activo, cedula, fecha_nacimiento FROM usuario');
-    res.json({ data: users });
+    const [usuarios] = await db.execute('SELECT id_usuario, nombre, apellidos, email, rol, activo, cedula, fecha_nacimiento FROM usuario');
+    res.json({ data: usuarios });
   } catch (error) {
     res.status(500).json({ message: 'Error obteniendo usuarios.' });
   }
@@ -13,12 +12,11 @@ export const getAllUsers = async (req, res) => {
 // obtener trabajadores
 export const getAllWorkers = async (req, res) => {
   try {
-    const [workers] = await db.execute(`
-      SELECT t.id_trabajador, t.nombre, t.apellido, t.area as departamento, u.email, u.activo, u.id_usuario, u.rol
+    const [trabajadores] = await db.execute(`
       SELECT t.id_trabajador, t.nombre, t.apellido, t.area as departamento, u.email, u.activo, u.id_usuario, u.rol, u.cedula, u.fecha_nacimiento
       FROM trabajador t
       JOIN usuario u ON t.id_usuario = u.id_usuario`);
-    res.json({ data: workers });
+    res.json({ data: trabajadores });
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener trabajadores.' });
   }
