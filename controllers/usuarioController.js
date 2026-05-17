@@ -66,12 +66,12 @@ export const uploadProfilePicture = async (req, res) => {
  */
 export const updateUser = async (req, res) => {
   const { nombre, apellidos, email, rol, password, cedula, fecha_nacimiento } = req.body;
-  const foto_perfil = req.file ? req.file.filename : null; 
+  const foto_perfil = req.file ? `/uploads/${req.file.filename}` : null; 
 
   try {
     // Construcción de la consulta dinámica
-    let query = 'UPDATE usuario SET nombre = ?, apellidos = ?, email = ?';
-    const params = [nombre, apellidos, email];
+    let query = 'UPDATE usuario SET nombre = COALESCE(?, nombre), apellidos = COALESCE(?, apellidos), email = COALESCE(?, email)';
+    const params = [nombre || null, apellidos || null, email || null];
     
     if (foto_perfil) {
       query += ', foto_perfil = ?';
@@ -110,29 +110,38 @@ export const updateUser = async (req, res) => {
  */
 export const createUser = async (req, res) => {
   const { nombre, apellidos, email, password, rol, cedula, fecha_nacimiento } = req.body;
+  let connection;
   try {
     if (!password) {
       return res.status(400).json({ message: 'La contraseña es obligatoria.' });
     }
+    
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const [result] = await db.execute(
+    const [result] = await connection.execute(
       'INSERT INTO usuario (nombre, apellidos, email, password_hash, rol, activo, fecha_registro, cedula, fecha_nacimiento) VALUES (?, ?, ?, ?, ?, 1, CURDATE(), ?, ?)', 
       [nombre, apellidos, email, hashedPassword, rol, cedula, fecha_nacimiento]);
     
     // Lógica de integridad para roles de trabajador
     if (rol === 'trabajador') {
       const id_usuario = result.insertId;
-      await db.execute(
+      await connection.execute(
         'INSERT INTO trabajador (numero_cedula, nombre, apellido, area, fecha_ingreso, id_usuario) VALUES (?, ?, ?, ?, CURDATE(), ?)',
         [cedula, nombre, apellidos, 'Sin asignar', id_usuario]
       );
     }
     
+    await connection.commit();
     res.status(201).json({ message: 'Usuario creado exitosamente.' });
   } catch (error) {
     console.error('Error en createUser:', error);
+    if (connection) await connection.rollback();
     res.status(500).json({ message: 'Error creando usuario.' });
+  } finally {
+    if (connection) connection.release();
   }
 };
 

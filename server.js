@@ -2,7 +2,6 @@
 import express from 'express';
 import path, { dirname } from 'path';
 import fs from 'fs';
-import multer from 'multer';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
 import dotenv from 'dotenv'; // Import dotenv
