@@ -36,7 +36,6 @@ document.addEventListener('DOMContentLoaded', function () {
      * @returns {Object} Objeto con los datos del usuario
      */
     const getUserData = () => {
-        const userStr = localStorage.getItem('userToken');
         const userStr = localStorage.getItem('userData');
         try {
             return JSON.parse(userStr);

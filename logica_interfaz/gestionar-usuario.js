@@ -32,6 +32,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const userEmailInput = document.getElementById('user-email-input');
     const userRoleSelect = document.getElementById('user-role-select');
     const userPasswordInput = document.getElementById('user-password-input');
+    const userCedulaInput = document.getElementById('user-cedula-input');
+    const userBirthdateInput = document.getElementById('user-birthdate-input');
 
     const BASE_URL = 'http://localhost:3001';
     let currentTab = 'usuarios'; // usuarios o trabajadores
@@ -97,7 +99,6 @@ document.addEventListener('DOMContentLoaded', function () {
      */
     const loadData = async (type) => {
         if (!checkAuthentication()) return;
-        const endpoint = type === 'usuarios' ? '/api/usuarios' : '/api/trabajadores';
         const endpoint = type === 'usuarios' ? `${BASE_URL}/api/usuarios` : `${BASE_URL}/api/trabajadores`;
 
         try {
@@ -111,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 dataStore[type] = result.data || [];
                 renderTable();
             } else {
-                window.showAppNotification(`Error: ${result.error}`, 'error');
+                window.showAppNotification(`Error: ${result.error || result.message}`, 'error');
             }
         } catch (error) {
             console.error(`Error al cargar ${type}:`, error);
@@ -174,6 +175,8 @@ document.addEventListener('DOMContentLoaded', function () {
         editingUserId = null;
         if (modalTitle) modalTitle.textContent = 'Crear Nuevo Usuario';
         if (modalForm) modalForm.reset(); // Limpia todos los campos
+        if (userCedulaInput) userCedulaInput.value = '';
+        if (userBirthdateInput) userBirthdateInput.value = '';
         if (userPasswordInput) {
             userPasswordInput.placeholder = 'Crear una contraseña segura';
         }
@@ -192,6 +195,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (userNameInput) userNameInput.value = user.nombre;
         if (userLastnameInput) userLastnameInput.value = user.apellidos || '';
         if (userEmailInput) userEmailInput.value = user.email;
+        if (userCedulaInput) userCedulaInput.value = user.cedula || '';
+        if (userBirthdateInput) userBirthdateInput.value = user.fecha_nacimiento ? user.fecha_nacimiento.split('T')[0] : '';
         if (userRoleSelect) userRoleSelect.value = user.rol || 'usuario';
         if (userPasswordInput) {
             userPasswordInput.value = '';
@@ -219,6 +224,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const name = userNameInput?.value.trim();
         const lastname = userLastnameInput?.value.trim();
         const email = userEmailInput?.value.trim();
+        const cedula = userCedulaInput?.value.trim();
+        const birthdate = userBirthdateInput?.value;
         const password = userPasswordInput?.value;
 
         if (!name) {
@@ -233,6 +240,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!email) {
             window.showAppNotification('El email es requerido.', 'error');
+            return false;
+        }
+
+        if (!cedula) {
+            window.showAppNotification('La cédula es requerida.', 'error');
+            return false;
+        }
+
+        if (!birthdate) {
+            window.showAppNotification('La fecha de nacimiento es requerida.', 'error');
             return false;
         }
 
@@ -270,6 +287,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 nombre: userNameInput?.value.trim(),
                 apellidos: userLastnameInput?.value.trim(),
                 email: userEmailInput?.value.trim(),
+                cedula: userCedulaInput?.value.trim(),
+                fecha_nacimiento: userBirthdateInput?.value,
                 rol: userRoleSelect?.value,
             };
 
@@ -280,8 +299,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const method = editingUserId ? 'PUT' : 'POST';
             const url = editingUserId
-                ? `/api/usuarios/${editingUserId}` : '/api/usuarios';
-                ? `${BASE_URL}/api/usuarios/${editingUserId}` : `${BASE_URL}/api/usuarios`;
+                ? `${BASE_URL}/api/usuarios/${editingUserId}` 
+                : `${BASE_URL}/api/usuarios`;
 
             const response = await fetch(url, {
                 method: method,
@@ -300,7 +319,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 closeModal();
                 loadData(currentTab); // Recargar la tabla actual
             } else {
-                window.showAppNotification(`Error: ${result.error}`, 'error');
+                window.showAppNotification(`Error: ${result.error || result.message}`, 'error');
             }
         } catch (error) {
             console.error('Error al guardar usuario:', error);
@@ -323,7 +342,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const token = getAuthToken();
             // BUG CORREGIDO: Siempre se elimina a través de la ruta de usuarios,
             // ya que el backend está configurado para borrar el trabajador asociado.
-            const response = await fetch(`/api/usuarios/${userId}`, {
             const response = await fetch(`${BASE_URL}/api/usuarios/${userId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -335,7 +353,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 window.showAppNotification('Usuario eliminado correctamente.', 'success');
                 loadData(currentTab); // Recargar la tabla actual
             } else {
-                window.showAppNotification(`Error: ${result.error}`, 'error');
+                window.showAppNotification(`Error: ${result.error || result.message}`, 'error');
             }
         } catch (error) {
             console.error('Error al eliminar usuario:', error);

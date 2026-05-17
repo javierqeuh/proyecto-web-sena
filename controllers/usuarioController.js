@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 export const getAllUsers = async (req, res) => {
   try {
     const [users] = await db.execute('SELECT id_usuario, nombre, apellidos, email, rol, activo FROM usuario');
+    const [users] = await db.execute('SELECT id_usuario, nombre, apellidos, email, rol, activo, cedula, fecha_nacimiento FROM usuario');
     res.json({ data: users });
   } catch (error) {
     res.status(500).json({ message: 'Error obteniendo usuarios.' });
@@ -14,6 +15,7 @@ export const getAllWorkers = async (req, res) => {
   try {
     const [workers] = await db.execute(`
       SELECT t.id_trabajador, t.nombre, t.apellido, t.area as departamento, u.email, u.activo, u.id_usuario, u.rol
+      SELECT t.id_trabajador, t.nombre, t.apellido, t.area as departamento, u.email, u.activo, u.id_usuario, u.rol, u.cedula, u.fecha_nacimiento
       FROM trabajador t
       JOIN usuario u ON t.id_usuario = u.id_usuario`);
     res.json({ data: workers });
@@ -47,10 +49,10 @@ export const uploadProfilePicture = async (req, res) => {
 
 // atualizar usuario
 export const updateUser = async (req, res) => {
-  const { nombre, apellidos, email, rol, password } = req.body;
+  const { nombre, apellidos, email, rol, password, cedula, fecha_nacimiento } = req.body;
   try {
-    let query = 'UPDATE usuario SET nombre = ?, apellidos = ?, email = ?';
-    const params = [nombre, apellidos, email];
+    let query = 'UPDATE usuario SET nombre = ?, apellidos = ?, email = ?, cedula = ?, fecha_nacimiento = ?';
+    const params = [nombre, apellidos, email, cedula, fecha_nacimiento];
     
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -67,24 +69,30 @@ export const updateUser = async (req, res) => {
     res.status(500).json({ message: 'Error actualizando usuario.' });
   }
 };
-// crear usuario 
+// crear usuario desde gestin de usuario
 export const createUser = async (req, res) => {
-  const { nombre, apellidos, email, password, rol } = req.body;
+  const { nombre, apellidos, email, password, rol, cedula, fecha_nacimiento } = req.body;
   try {
+    if (!password) {
+      return res.status(400).json({ message: 'La contraseña es obligatoria.' });
+    }
     const hashedPassword = await bcrypt.hash(password, 10);
-    const [result] = await db.execute('INSERT INTO usuario (nombre, apellidos, email, password_hash, rol, activo, fecha_registro) VALUES (?, ?, ?, ?, ?, 1, CURDATE())', [nombre, apellidos, email, hashedPassword, rol]);
+
+    const [result] = await db.execute(
+      'INSERT INTO usuario (nombre, apellidos, email, password_hash, rol, activo, fecha_registro, cedula, fecha_nacimiento) VALUES (?, ?, ?, ?, ?, 1, CURDATE(), ?, ?)', 
+      [nombre, apellidos, email, hashedPassword, rol, cedula, fecha_nacimiento]);
     
     if (rol === 'trabajador') {
       const id_usuario = result.insertId;
-      // Se inserta con datos básicos en trabajador. La cédula es obligatoria en BD usualmente, se usa un placeholder si no viene del front.
       await db.execute(
         'INSERT INTO trabajador (numero_cedula, nombre, apellido, area, fecha_ingreso, id_usuario) VALUES (?, ?, ?, ?, CURDATE(), ?)',
-        ['000000', nombre, apellidos, 'Sin asignar', id_usuario]
+        [cedula, nombre, apellidos, 'Sin asignar', id_usuario]
       );
     }
     
     res.status(201).json({ message: 'Usuario creado exitosamente.' });
   } catch (error) {
+    console.error('Error en createUser:', error);
     res.status(500).json({ message: 'Error creando usuario.' });
   }
 };
