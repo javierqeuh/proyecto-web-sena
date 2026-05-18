@@ -38,11 +38,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const BASE_URL = 'http://localhost:3001';
     let currentTab = 'usuarios'; // usuarios o trabajadores
     let editingUserId = null;
+    
     // Almacén centralizado para los datos de ambas pestañas
     const dataStore = {
         usuarios: [],
         trabajadores: []
     };
+
+    // Verificar si el rol actual tiene permisos de gestión (Administrador o Usuario creador)
+    const userRole = localStorage.getItem('userRole');
+    const canManage = userRole === 'administrador' || userRole === 'usuario';
+
+    if (!canManage && addUserBtn) {
+        addUserBtn.style.display = 'none';
+    }
+
     // ========== FUNCIONES DE UTILIDAD ==========
 
     /**
@@ -131,8 +141,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const data = dataStore[currentTab];
         const isUsersTab = currentTab === 'usuarios';
         const headers = isUsersTab 
-            ? ['Nombre', 'Email', 'Rol', 'Activo', 'Acciones']
-            : ['Nombre', 'Email', 'Departamento', 'Activo', 'Acciones'];
+            ? ['Nombre', 'Email', 'Rol', 'Activo']
+            : ['Nombre', 'Email', 'Departamento', 'Activo'];
+
+        if (canManage) headers.push('Acciones');
 
         // Actualizar cabeceras de la tabla
         const headerRow = tableBody.parentElement.querySelector('thead tr');
@@ -154,16 +166,23 @@ document.addEventListener('DOMContentLoaded', function () {
             const name = isUsersTab ? `${item.nombre} ${item.apellidos || ''}` : item.nombre;
             const roleOrDept = isUsersTab ? item.rol : item.departamento;
 
-            row.innerHTML = `
+            let rowContent = `
                 <td>${name}</td>
                 <td>${item.email}</td>
                 <td>${roleOrDept}</td>
                 <td>${statusIcon}</td>
-                <td>
-                    <button class="secondary edit-btn" style="padding: 5px 10px; margin-right: 5px;">Editar</button>
-                    <button class="danger delete-btn" style="padding: 5px 10px;">Eliminar</button>
-                </td>
             `;
+
+            if (canManage) {
+                rowContent += `
+                    <td>
+                        <button class="secondary edit-btn" style="padding: 5px 10px; margin-right: 5px;">Editar</button>
+                        <button class="danger delete-btn" style="padding: 5px 10px;">Eliminar</button>
+                    </td>
+                `;
+            }
+
+            row.innerHTML = rowContent;
             tableBody.appendChild(row);
         });
     };
