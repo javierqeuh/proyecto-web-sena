@@ -3,8 +3,6 @@
  * Responsabilidades:
  * - Cargar historial de encuestas enviadas por el usuario
  * - Mostrar información de envíos (fecha, cantidad de respuestas, estado)
- * - Filtrar por rango de fechas
- * - Filtrar por usuario/estado
  * - Reenviar encuestas
  * - Exportar historial a Excel
  * - Manejar errores y notificaciones
