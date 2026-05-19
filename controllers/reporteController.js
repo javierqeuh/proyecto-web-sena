@@ -1,5 +1,5 @@
 import db from '../config/db.js';
-
+// Controlador para manejar las estadísticas del dashboard y el historial de envíos/asignaciones
 export const getDashboardStats = async (req, res) => {
   try {
     const [activeSurveys] = await db.execute('SELECT COUNT(*) as count FROM encuesta WHERE fecha_limite >= NOW() OR fecha_limite IS NULL');
@@ -17,7 +17,7 @@ export const getDashboardStats = async (req, res) => {
     res.status(500).json({ message: 'Error obteniendo estadísticas.' });
   }
 };
-
+// Controladores para obtener el historial de asignaciones y envíos, con filtros opcionales
 export const getAssignmentsHistory = async (req, res) => {
   try {
     const [rows] = await db.execute(`
@@ -33,7 +33,7 @@ export const getAssignmentsHistory = async (req, res) => {
     res.status(500).json({ message: 'Error obteniendo historial.' });
   }
 };
-
+// Controlador para obtener el historial de encuestas enviadas por el usuario, con detalles de respuestas y estado
 export const getSendHistory = async (req, res) => {
   const userId = req.user.id_usuario;
   const userRole = req.user.rol;
@@ -66,7 +66,7 @@ export const getSendHistory = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener historial.' });
   }
 };
-
+// Controlador para reenviar una encuesta a los usuarios que aún no la han respondido, creando notificaciones de recordatorio
 export const resendSurvey = async (req, res) => {
   const surveyId = req.params.id;
   let connection;

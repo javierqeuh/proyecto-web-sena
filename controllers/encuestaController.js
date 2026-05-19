@@ -1,5 +1,5 @@
 import db from '../config/db.js';
-
+// Controladores para manejar la creación, edición, eliminación y asignación de encuestas, así como la gestión de respuestas y comentarios relacionados
 export const createSurvey = async (req, res) => {
   const { title, description, deadline, is_mandatory, questions } = req.body;
   const userId = req.user.id_usuario;
@@ -46,7 +46,7 @@ export const createSurvey = async (req, res) => {
     if (connection) connection.release();
   }
 };
-
+// Controlador para eliminar una encuesta, asegurando que solo el creador pueda eliminarla
 export const deleteSurvey = async (req, res) => {
   const { id } = req.params;
   try {
@@ -58,7 +58,7 @@ export const deleteSurvey = async (req, res) => {
     res.status(500).json({ message: 'Error al eliminar la encuesta' });
   }
 };
-
+// Controlador para obtener todas las encuestas, con opción de filtrar por creador o estado
 export const getAllSurveys = async (req, res) => {
   try {
     const [rows] = await db.execute('SELECT * FROM encuesta ORDER BY fecha_creacion DESC');
@@ -67,7 +67,7 @@ export const getAllSurveys = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener encuestas.' });
   }
 };
-
+// Controlador para obtener los detalles de una encuesta específica, incluyendo sus preguntas y opciones
 export const getSurveyById = async (req, res) => {
   const surveyId = req.params.id;
   try {
@@ -95,7 +95,7 @@ export const getSurveyById = async (req, res) => {
     res.status(500).json({ message: 'Error del servidor.' });
   }
 };
-
+// Controlador para guardar las respuestas de un trabajador a una encuesta asignada, con validación de estado y tipo de pregunta
 export const getSurveyResponses = async (req, res) => {
   const surveyId = req.params.id;
   try {
@@ -136,7 +136,7 @@ export const getSurveyResponses = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener resultados.' });
   }
 };
-
+// Controlador para asignar una encuesta a múltiples trabajadores, creando notificaciones para cada asignación
 export const saveResponses = async (req, res) => {
   const surveyId = req.params.id;
   const userId = req.user.id_usuario;
@@ -202,7 +202,7 @@ export const saveResponses = async (req, res) => {
     if (connection) connection.release();
   }
 };
-
+// Controlador para asignar una encuesta a múltiples trabajadores, creando notificaciones para cada asignación
 export const assignSurvey = async (req, res) => {
   const { id_encuesta, usuarios, fecha_asignacion } = req.body;
 
@@ -245,7 +245,7 @@ export const assignSurvey = async (req, res) => {
     if (connection) connection.release();
   }
 };
-
+// Controlador para obtener las encuestas asignadas al trabajador logueado, con detalles de estado y fecha de asignación
 export const getMyAssignments = async (req, res) => {
   try {
     const [rows] = await db.execute(`SELECT a.id_asignacion, a.estado, a.fecha_asignacion, e.id_encuesta, e.titulo, e.descripcion, e.fecha_limite FROM encuesta_asignada a JOIN trabajador t ON a.id_trabajador = t.id_trabajador JOIN encuesta e ON a.id_encuesta = e.id_encuesta WHERE t.id_usuario = ? ORDER BY a.fecha_asignacion DESC`, [req.user.id_usuario]);
@@ -254,7 +254,7 @@ export const getMyAssignments = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener asignaciones.' });
   }
 };
-
+// Controlador para agregar un comentario a una asignación de encuesta, permitiendo comunicación entre el trabajador y el creador
 export const addAssignmentComment = async (req, res) => {
   const { id } = req.params; // id_asignacion
   const { texto } = req.body;
