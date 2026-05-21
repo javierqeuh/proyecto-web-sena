@@ -1,13 +1,11 @@
-// js/dashboard.js
-// Conecta el dashboard con la base de datos mediante la API
-// solo el usuario con rol usuario podra ver el dashboard
+
 
 // Fallback para notificaciones si common.js no está cargado
 const safeShowNotification = (message, type) => {
     if (window.showAppNotification) window.showAppNotification(message, type);
     else alert(message);
 };
-
+// Función para cargar estadísticas del dashboard
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Dashboard cargado');
     
@@ -60,6 +58,7 @@ async function loadDashboardStats(token) {
         const statPending = document.getElementById('stat-pending');
         const statUsers = document.getElementById('stat-users');
         const statCompleted = document.getElementById('stat-completed');
+        
 
         if (statActive) statActive.textContent = data.active || 0;
         if (statPending) statPending.textContent = data.pending || 0;

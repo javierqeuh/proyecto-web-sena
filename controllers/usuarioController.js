@@ -92,7 +92,7 @@ export const updateUser = async (req, res) => {
     await db.execute(query, params);
 
     // Retornamos el usuario actualizado para sincronizar el estado en el frontend
-    const [updatedUser] = await db.execute('SELECT id_usuario, nombre, apellidos, email, rol, foto_perfil FROM usuario WHERE id_usuario = ?', [req.params.id]);
+    const [updatedUser] = await db.execute('SELECT id_usuario, nombre, apellidos, email, rol, foto_perfil, cedula, fecha_nacimiento FROM usuario WHERE id_usuario = ?', [req.params.id]);
     
     res.json({ 
       message: 'Usuario actualizado correctamente.',

@@ -1,14 +1,6 @@
 /**
  * Lógica para la página: perfil.html
- * Responsabilidades:
- * - Cargar datos del perfil del usuario autenticado
- * - Permitir editar nombre, email, teléfono, etc.
- * - Cambiar contraseña del usuario
- * - Validar datos antes de enviar
- * - Enviar cambios al servidor
- * - Manejar errores y notificaciones
  */
-
 document.addEventListener('DOMContentLoaded', function () {
     // Verificar que ésta sea la página correcta
     if (document.body.id !== 'page-perfil') {
@@ -16,11 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ========== ELEMENTOS DEL DOM ==========
-    const profileForm = document.getElementById('profile-form');
     const saveProfileBtn = document.getElementById('save-profile-btn');
-
-  
-
 
     // Campos del perfil
     const profileNombreInput = document.getElementById('profile-nombre');
@@ -51,6 +39,17 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     /**
+     * Construye la URL completa para una imagen de perfil
+     */
+    const getProfileImageUrl = (photoPath) => {
+        if (!photoPath) return 'assets/img/default-avatar.png';
+        if (photoPath.startsWith('http') || photoPath.startsWith('data:')) return photoPath;
+        const baseUrl = 'http://localhost:3001';
+        // Si el path ya incluye /uploads/ (como lo guarda el backend), no lo repetimos
+        return photoPath.startsWith('/') ? `${baseUrl}${photoPath}` : `${baseUrl}/${photoPath}`;
+    };
+
+    /**
      * Verifica que el usuario esté autenticado
      * @returns {boolean} true si existe token, false en caso contrario
      */
@@ -64,37 +63,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return true;
     };
 
-    /**
-     * Valida una dirección de email
-     * @param {string} email - Email a validar
-     * @returns {boolean} true si es válido
-     */
-    const validateEmail = (email) => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    };
-
-    /**
-     * Valida que una contraseña cumpla los requisitos
-     * @param {string} password - Contraseña a validar
-     * @returns {Object} {isValid: boolean, message: string}
-     */
-    const validatePassword = (password) => {
-        if (password.length < 8) {
-            return { isValid: false, message: 'La contraseña debe tener al menos 8 caracteres.' };
-        }
-        if (!/[A-Z]/.test(password)) {
-            return { isValid: false, message: 'La contraseña debe contener al menos una mayúscula.' };
-        }
-        if (!/[0-9]/.test(password)) {
-            return { isValid: false, message: 'La contraseña debe contener al menos un número.' };
-        }
-        return { isValid: true, message: '' };
-    };
-
-    /**
-     * Carga los datos del perfil del usuario desde localStorage
-     */
+    // ========== FUNCIONES PRINCIPALES ==========
     const loadUserProfile = async () => {
         if (!checkAuthentication()) return;
 
@@ -141,81 +110,28 @@ document.addEventListener('DOMContentLoaded', function () {
         if (profileEmailInput) profileEmailInput.value = user.email || '';
         if (profileRolInput) profileRolInput.value = user.rol || '';
 
-        // Mostrar nombre completo en el encabezado
-        if (profileHeaderName) {
-            let nombreCompleto = '';
-            if (profileNombreInput && profileApellidosInput) {
-                const nombre = profileNombreInput.value.trim();
-                const apellidos = profileApellidosInput.value.trim();
-                nombreCompleto = `${nombre} ${apellidos}`.trim();
-            }
-            profileHeaderName.textContent = nombreCompleto || 'Mi Perfil';
-        }
+        // Mostrar nombre completo en el encabezado usando los datos del objeto user
+        const nombreFull = `${user.nombre || ''} ${user.apellidos || ''}`.trim();
+        if (profileHeaderName) profileHeaderName.textContent = nombreFull || 'Mi Perfil';
 
         // Mostrar la foto de perfil si existe en los datos del usuario
         const profilePicturePreview = document.getElementById('profile-picture-preview');
-        if (profilePicturePreview && user.foto_perfil) {
-            // Ajusta la URL según la carpeta donde tu backend sirva las imágenes (ej: /uploads/)
-            const imageUrl = user.foto_perfil.startsWith('http') 
-                ? user.foto_perfil 
-                : `http://localhost:3001/uploads/${user.foto_perfil}`;
-            profilePicturePreview.src = imageUrl;
+        if (profilePicturePreview) {
+            profilePicturePreview.src = getProfileImageUrl(user.foto_perfil);
+        }
+
+        const headerPicture = document.getElementById('header-profile-picture');
+        if (headerPicture) {
+            headerPicture.src = getProfileImageUrl(user.foto_perfil);
         }
     };
 
-    /**
-     * Activa el modo de edición del perfil
-     */
-    const activateEditMode = () => {
-        // En la interfaz actual, no hay modo lectura/edición separados
-        // Los campos siempre están habilitados para edición
-    };
+    // Función para guardar los cambios del perfil
+    const saveProfile = async (e) => {
+        if (e) e.preventDefault();
 
-    /**
-     * Desactiva el modo de edición del perfil
-     */
-    const deactivateEditMode = () => {
-        // En la interfaz actual, no hay modo lectura/edición separados
-        loadUserProfile(); // Recargar datos originales
-    };
-
-    /**
-     * Valida los datos del formulario de perfil
-     * @returns {boolean} true si todos los datos son válidos
-     */
-    const validateProfileForm = () => {
-        const nombre = profileNombreInput?.value.trim();
-        const apellidos = profileApellidosInput?.value.trim();
-        const email = profileEmailInput?.value.trim();
-
-        if (!nombre) {
+        if (!profileNombreInput?.value.trim()) {
             window.showAppNotification('El nombre es requerido.', 'error');
-            return false;
-        }
-
-        if (!apellidos) {
-            window.showAppNotification('El apellido es requerido.', 'error');
-            return false;
-        }
-
-        if (!email) {
-            window.showAppNotification('El email es requerido.', 'error');
-            return false;
-        }
-
-        if (!validateEmail(email)) {
-            window.showAppNotification('Por favor, ingresa un email válido.', 'error');
-            return false;
-        }
-
-        return true;
-    };
-
-    /**
-     * Guarda los cambios del perfil en localStorage
-     */
-    const saveProfile = async () => {
-        if (!validateProfileForm()) {
             return;
         }
 
@@ -223,6 +139,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             const userData = getUserData();
+            const userId = userData?.id_usuario || userData?.id;
+            if (!userId) throw new Error('No se encontró el ID del usuario');
 
             // Cambiamos a FormData para poder enviar el archivo de imagen
             const formData = new FormData();
@@ -237,11 +155,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             const token = getAuthToken();
-            const response = await fetch(`http://localhost:3001/api/usuarios/${userData.id_usuario}`, {
+            const response = await fetch(`http://localhost:3001/api/usuarios/${userId}`, {
                 method: 'PUT',
                 headers: {
-                    // ¡IMPORTANTE!: No definas Content-Type manualmente al usar FormData.
-                    // El navegador lo hará automáticamente incluyendo el "boundary".
                     'Authorization': `Bearer ${token}`
                 },
                 body: formData
@@ -252,7 +168,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const result = await response.json();
             
             // Actualizar caché local con la respuesta del servidor (que ya trae la nueva URL de la foto)
-            const newUserData = { ...userData, ...result.user };
+            const updatedUser = result.user || result;
+            const newUserData = { ...userData, ...updatedUser };
             localStorage.setItem('userData', JSON.stringify(newUserData));
 
             // Actualizar información visual en el sidebar inmediatamente
@@ -261,8 +178,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 sidebarNameEl.textContent = `${newUserData.nombre} ${newUserData.apellidos || ''}`.trim();
             }
 
+            // Actualizar también la imagen en el header global
+            const headerPicture = document.getElementById('header-profile-picture');
+            if (headerPicture) {
+                headerPicture.src = getProfileImageUrl(newUserData.foto_perfil);
+            }
+
             window.showAppNotification('Perfil actualizado correctamente.', 'success');
-            loadUserProfile();
+            // En lugar de recargar de la API, usamos los datos que ya recibimos
+            displayUserProfile(newUserData);
         } catch (error) {
             console.error('Error al guardar perfil:', error);
             window.showAppNotification('Error al guardar el perfil.', 'error');
@@ -295,7 +219,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-    // ========== EVENT LISTENERS ==========
 
     // Botón para guardar cambios del perfil
     if (saveProfileBtn) {
