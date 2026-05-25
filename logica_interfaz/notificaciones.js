@@ -1,14 +1,5 @@
-/**
- * Lógica para la página: notificaciones.html
- * Responsabilidades:
- * - Cargar lista de notificaciones del usuario
- * - Mostrar encuestas pendientes de responder al rol trabajador 
- * - Mostrar asignaciones de encuestas
- * - Marcar notificaciones como leídas al darle responder encuestas al rol trabajador
- * - Eliminar notificaciones para rol usuario y trabajador
- * - Redirigir a la encuesta correspondiente para el rol trabajdor 
- */
 
+// notificaciones.js
 document.addEventListener('DOMContentLoaded', function () {
     // Verificar que ésta sea la página correcta
     if (document.body.id !== 'page-notificaciones') {
@@ -323,9 +314,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    /**
-     * Marca todas las notificaciones como leídas al abrir la página
-     */
+    
+     //Marca todas las notificaciones como leídas al abrir la página
+     
     const markAllAsRead = async () => {
         if (!checkAuthentication()) return;
         try {
@@ -377,6 +368,6 @@ document.addEventListener('DOMContentLoaded', function () {
         markAllAsRead();
     });
 
-    // Actualizar notificaciones cada 30 segundos
-    setInterval(loadNotifications, 30000);
+    // Actualizar notificaciones cada 10 segundos
+    setInterval(loadNotifications, 10000);
 });
