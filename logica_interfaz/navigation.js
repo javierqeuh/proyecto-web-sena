@@ -35,10 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (badge) {
                     const count = result.data.count || 0;
                     badge.textContent = count;
-                    badge.style.display = count > 0 ? 'inline-block' : 'none';
-                    // Estilo verde para el contador
-                    badge.style.backgroundColor = '#28a745';
-                    badge.style.color = '#ffffff';
+                    // Cambiamos a 'flex' para que el centrado de CSS surta efecto
+                    badge.style.display = count > 0 ? 'flex' : 'none';
                 }
             }
         } catch (error) {

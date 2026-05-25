@@ -5,14 +5,14 @@
   box-sizing: border-box;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-
+/* Estilos generales */
 body {
   background-color: #fafafa;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   height: auto;
   margin: 20px;
 }
-
+/* Encabezado */
 .header {
   display: flex;
   justify-content: space-between;
@@ -22,13 +22,13 @@ body {
   border-bottom: 1px solid #e0dfdf;
   margin-bottom: o.5px;
 }
-
+/* Logo y nombre de la empresa */
 .logo-container {
   display: flex;
   align-items: center;
   gap: 15px;
 }
-
+/* Logo circular */
 .logo {
   width: 100px;
   height: 100px;
@@ -40,14 +40,14 @@ body {
   font-weight: bold;
   color: #2e7d32;
 }
-
+/* Nombre de la empresa */
 .company-name {
   font-size: 18px;
   font-weight: bold;
   color: #333;
   letter-spacing: 1px;
 }
-
+/* Panel de usuario */
 .user-panel {
   background-color: #5d8c6a;
   color: white;
@@ -57,12 +57,12 @@ body {
   align-items: center;
   gap: 20px;
 }
-
+/* Información del usuario */
 .user-info p {
   margin: 3px 0;
   font-size: 14px;
 }
-
+/* Avatar del usuario */
 .user-avatar {
   width: 60px;
   height: 60px;
@@ -74,25 +74,25 @@ body {
   color: black;
   font-size: 30px;
 }
-
+/* Botón de cerrar sesión */
 .logout-btn {
   color: white;
   text-decoration: underline;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 18px;
   margin-left: 10px;
 }
-
+/* Barra de navegación */
 .nav-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  background-color: #f8f9fa;
+  background-color: #f8f9fa; 
   padding: 10px 15px;
   border-bottom: 1px solid #ddd;
   font-family: Arial, sans-serif;
 }
-
+/* Elementos de navegación */
 .nav-item {
   display: flex;
   align-items: center;
@@ -104,11 +104,11 @@ body {
   font-weight: 500;
   border-radius: 4px;
 }
-
+/* Hover en elementos de navegación */
 .nav-item:hover {
   background-color: #e9ecef;
 }
-
+/* Íconos de navegación */
 .nav-item i {
   font-size: 1.1rem;
   color: #6c757d;
@@ -126,7 +126,7 @@ body {
 .notification-badge {
   position: relative;
 }
-
+/* Badge de notificaciones */
 .badge {
   position: absolute;
   top: -8px;
@@ -146,23 +146,9 @@ body {
 .notification-badge {
   position: relative;
 }
+/* Badge de notificaciones */
 
-.badge {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background-color: #ff4d4d;
-  color: white;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: bold;
-}
-
+/* Contenedor de la tarjeta */
 .card {
   background: white;
   border-radius: 10px;
@@ -171,8 +157,7 @@ body {
   margin-bottom: 20px;
 }
 
-
-
+/* Títulos dentro de la tarjeta */
 input, textarea, select, button {
   padding: 10px;
   margin: 8px 0;
@@ -181,7 +166,7 @@ input, textarea, select, button {
   width: 100%;
   font-size: 16px;
 }
-
+/* Botones */
 button {
   background-color: #306E40;
   color: white;
@@ -206,7 +191,7 @@ button.danger:hover { background-color: #c82333; }
   border-collapse: collapse;
   margin-top: 16px;
 }
-
+/* Estilos para tablas */
 .table th, .table td {
   padding: 12px;
   text-align: left;

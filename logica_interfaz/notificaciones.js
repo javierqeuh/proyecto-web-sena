@@ -111,9 +111,6 @@ document.addEventListener('DOMContentLoaded', function () {
         filteredNotifications.forEach(notification => {
             const card = document.createElement('div');
             card.className = 'card';
-            if (notification.leida) {
-                card.style.opacity = '0.6';
-            }
 
             const icon = getIconForType(notification.tipo);
             const fecha = new Date(notification.fecha_creacion).toLocaleString('es-ES');
@@ -188,7 +185,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (btn) {
                     const card = btn.closest('.card');
                     if (card) {
-                        card.style.opacity = '0.6';
                         btn.remove(); // Eliminar botón de "Marcar como leída"
                     }
                 } else {
@@ -306,7 +302,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (badge) {
                     const count = result.data.count || 0;
                     badge.textContent = count;
-                    badge.style.display = count > 0 ? 'inline-block' : 'none';
+                    // Aseguramos el uso de flex para el centrado del número
+                    badge.style.display = count > 0 ? 'flex' : 'none';
                 }
             }
         } catch (error) {
