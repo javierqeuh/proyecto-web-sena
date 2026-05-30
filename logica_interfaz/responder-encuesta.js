@@ -86,36 +86,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 surveys.forEach(survey => {
                     const surveyCard = document.createElement('div');
                     surveyCard.className = 'survey-card';
-                    surveyCard.style.cursor = 'pointer';
-                    surveyCard.style.padding = '15px';
-                    surveyCard.style.border = '1px solid #ddd';
-                    surveyCard.style.borderRadius = '4px';
-                    surveyCard.style.marginBottom = '10px';
-                    surveyCard.style.transition = 'all 0.3s ease';
-                    surveyCard.style.backgroundColor = '#f9f9f9';
 
-                    const isMandatory = '';
-                    const deadline = survey.fecha_limite ? `<p><strong>Fecha límite:</strong> ${new Date(survey.fecha_limite).toLocaleDateString('es-ES')}</p>` : '';
+                    const deadline = survey.fecha_limite ? `<p class="deadline-info" style="color:#d9534f; font-size:0.9rem"><i class="fas fa-calendar-alt"></i> Finaliza el: ${new Date(survey.fecha_limite).toLocaleDateString('es-ES')}</p>` : '';
 
                     surveyCard.innerHTML = `
-                        <h3>${survey.titulo}${isMandatory}</h3>
+                        <h3>${survey.titulo}</h3>
                         <p>${survey.descripcion || 'Sin descripción'}</p>
                         ${deadline}
-                        <small>ID: ${survey.id_encuesta}</small>
-                        <div style="margin-top:10px; display:flex; gap:8px;">
-                          <button type="button" class="respond-btn" style="padding:8px 12px; background:#0d6efd; color:#fff; border:none; border-radius:4px; cursor:pointer;">Responder</button>
+                        <div class="card-footer" style="display:flex; justify-content:space-between; align-items:center; margin-top:15px">
+                          <span style="font-size: 0.8rem; color: #999;">ID: ${survey.id_encuesta}</span>
+                          <button type="button" class="respond-btn btn-submit" style="padding:8px 15px">Comenzar <i class="fas fa-arrow-right"></i></button>
                         </div>
                     `;
-
-                    surveyCard.addEventListener('mouseenter', () => {
-                        surveyCard.style.backgroundColor = '#f0f0f0';
-                        surveyCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                    });
-
-                    surveyCard.addEventListener('mouseleave', () => {
-                        surveyCard.style.backgroundColor = '#f9f9f9';
-                        surveyCard.style.boxShadow = 'none';
-                    });
 
                     const respondBtn = surveyCard.querySelector('.respond-btn');
                     if (respondBtn) {
@@ -195,32 +177,22 @@ document.addEventListener('DOMContentLoaded', function () {
             survey.questions.forEach((question, index) => {
                 const questionElement = document.createElement('div');
                 questionElement.className = 'question-response-block';
-                questionElement.style.marginBottom = '20px';
-                questionElement.style.padding = '15px';
-                questionElement.style.backgroundColor = '#f9f9f9';
-                questionElement.style.borderRadius = '4px';
-                questionElement.style.border = '1px solid #ddd';
 
                 const mandatoryLabel = question.is_mandatory ? '<span style="color: red;"> *</span>' : '';
 
                 let questionHTML = `
-                    <label style="display: block; margin-bottom: 6px; font-weight: bold;">
-                        ${index + 1}. ${question.text}${mandatoryLabel}
-                    </label>
+                    <label class="question-label">${index + 1}. ${question.text}${mandatoryLabel}</label>
                 `;
 
-                // Texto de ayuda según tipo
-                let helpText = '';
                 if (question.type === 'texto') {
-                    helpText = '<small style="color:#666; display:block; margin-bottom:8px;">Respuesta libre. Escribe con tus propias palabras.</small>';
+                    questionHTML += '<span class="help-text">Respuesta libre. Escribe con tus propias palabras.</span>';
                 } else if (question.type === 'opcion_multiple') {
-                    helpText = '<small style="color:#666; display:block; margin-bottom:8px;">Selecciona una sola opción.</small>';
+                    questionHTML += '<span class="help-text">Selecciona la opción que mejor te represente.</span>';
                 } else if (question.type === 'escala_1_5') {
-                    helpText = '<small style="color:#666; display:block; margin-bottom:8px;">Selecciona un valor de 1 (muy en desacuerdo) a 5 (muy de acuerdo).</small>';
+                    questionHTML += '<span class="help-text">Del 1 (Muy en desacuerdo) al 5 (Muy de acuerdo).</span>';
                 } else if (question.type === 'si_no') {
-                    helpText = '<small style="color:#666; display:block; margin-bottom:8px;">Selecciona Sí o No.</small>';
+                    questionHTML += '<span class="help-text">Selecciona una respuesta binaria.</span>';
                 }
-                questionHTML += helpText;
 
                 if (question.type === 'texto') {
                     questionHTML += `
@@ -228,7 +200,6 @@ document.addEventListener('DOMContentLoaded', function () {
                             class="response-textarea" 
                             data-question-id="${question.id_pregunta}"
                             placeholder="Escribe tu respuesta aquí..."
-                            style="width: 100%; min-height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"
                             ${question.is_mandatory ? 'required' : ''}
                         ></textarea>
                     `;
@@ -238,17 +209,14 @@ document.addEventListener('DOMContentLoaded', function () {
                         question.options.forEach(option => {
                             const optionId = `option-${question.id_pregunta}-${option.id_opcion}`;
                             questionHTML += `
-                                <label style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <label class="radio-option">
                                     <input 
                                         type="radio" 
                                         name="response-${question.id_pregunta}"
                                         class="response-radio"
-                                        data-question-id="${question.id_pregunta}"
-                                        data-option-id="${option.id_opcion}"
                                         value="${option.id_opcion}"
                                         id="${optionId}"
                                         ${question.is_mandatory ? 'required' : ''}
-                                        style="margin-right: 10px;"
                                     >
                                     <span>${option.text}</span>
                                 </label>
@@ -257,11 +225,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                     questionHTML += '</div>';
                 } else if (question.type === 'escala_1_5') {
-                    questionHTML += '<div style="margin-top: 6px; display:flex; gap:14px; align-items:center; flex-wrap:wrap;">';
+                    questionHTML += '<div class="scale-group">';
+                    questionHTML += '<span style="font-size:0.8rem; color:#999">En desacuerdo</span>';
                     for (let val = 1; val <= 5; val++) {
                         const optId = `scale-${question.id_pregunta}-${val}`;
                         questionHTML += `
-                            <label style="display:flex; align-items:center; gap:6px;">
+                            <label class="scale-option">
                                 <input
                                     type="radio"
                                     name="response-${question.id_pregunta}"
@@ -271,17 +240,18 @@ document.addEventListener('DOMContentLoaded', function () {
                                     id="${optId}"
                                     ${question.is_mandatory ? 'required' : ''}
                                 >
-                                <span>${val}</span>
+                                <span class="scale-number">${val}</span>
                             </label>
                         `;
                     }
+                    questionHTML += '<span style="font-size:0.8rem; color:#999">De acuerdo</span>';
                     questionHTML += '</div>';
                 } else if (question.type === 'si_no') {
                     const optionIdYes = `option-${question.id_pregunta}-yes`;
                     const optionIdNo = `option-${question.id_pregunta}-no`;
                     questionHTML += `
-                        <div style="margin-top: 6px;">
-                            <label style="display: flex; align-items: center; margin-bottom: 8px;">
+                        <div class="toggle-group">
+                            <label class="toggle-option">
                                 <input 
                                     type="radio" 
                                     name="response-${question.id_pregunta}"
@@ -290,11 +260,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                     value="Sí"
                                     id="${optionIdYes}"
                                     ${question.is_mandatory ? 'required' : ''}
-                                    style="margin-right: 10px;"
                                 >
-                                <span>Sí</span>
+                                <div class="toggle-box">Sí</div>
                             </label>
-                            <label style="display: flex; align-items: center;">
+                            <label class="toggle-option">
                                 <input 
                                     type="radio" 
                                     name="response-${question.id_pregunta}"
@@ -303,9 +272,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                     value="No"
                                     id="${optionIdNo}"
                                     ${question.is_mandatory ? 'required' : ''}
-                                    style="margin-right: 10px;"
                                 >
-                                <span>No</span>
+                                <div class="toggle-box">No</div>
                             </label>
                         </div>
                     `;

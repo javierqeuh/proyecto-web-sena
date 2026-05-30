@@ -7,17 +7,101 @@
   <link rel="stylesheet" href="style2.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
-    .progress-bar {
-      height: 8px;
-      background: #e0e0e0;
-      border-radius: 4px;
-      margin: 20px 0;
+    :root {
+      --primary-color: #306E40;
+      --primary-hover: #265933;
+      --bg-light: #f8fdf9;
+      --text-main: #333;
+      --text-muted: #666;
+      --border-color: #eee;
+      --danger: #d9534f;
     }
-    .progress-fill {
-      height: 100%;
-      width: 60%;
-      background: #007bff;
-      border-radius: 4px;
+
+    /* Estilos de Contenedores */
+    .container h1 { color: var(--text-main); font-weight: 700; margin-bottom: 25px; }
+    
+    /* Tarjetas de Encuesta (Listado) */
+    .survey-card {
+      cursor: pointer;
+      padding: 20px;
+      border: 1px solid var(--border-color);
+      border-left: 5px solid var(--primary-color);
+      border-radius: 10px;
+      margin-bottom: 15px;
+      transition: all 0.25s ease;
+      background-color: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .survey-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      background-color: var(--bg-light);
+    }
+
+    /* Bloques de Pregunta (Detalle) */
+    .question-response-block {
+      margin-bottom: 25px;
+      padding: 25px;
+      background-color: #fff;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+      animation: fadeIn 0.4s ease forwards;
+    }
+    .question-label { display: block; margin-bottom: 12px; font-weight: 600; font-size: 1.1rem; color: var(--text-main); }
+    .help-text { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px; display: block; }
+
+    /* Inputs de Texto */
+    .response-textarea {
+      width: 100%; min-height: 120px; padding: 12px; border: 1.5px solid var(--border-color);
+      border-radius: 8px; font-family: inherit; transition: border-color 0.2s; resize: vertical;
+    }
+    .response-textarea:focus { outline: none; border-color: var(--primary-color); }
+
+    /* Estilo Escala 1-5 */
+    .scale-group { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 15px; max-width: 450px; }
+    .scale-option { flex: 1; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+    .scale-option input { display: none; }
+    .scale-number {
+      width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+      border: 2px solid var(--border-color); border-radius: 50%; font-weight: bold;
+      color: var(--text-muted); transition: all 0.2s;
+    }
+    .scale-option:hover .scale-number { border-color: var(--primary-color); color: var(--primary-color); }
+    .scale-option input:checked + .scale-number { background-color: var(--primary-color); border-color: var(--primary-color); color: white; transform: scale(1.1); }
+
+    /* Estilo Sí/No */
+    .toggle-group { display: flex; gap: 15px; margin-top: 10px; }
+    .toggle-option { flex: 1; cursor: pointer; }
+    .toggle-option input { display: none; }
+    .toggle-box {
+      padding: 12px; text-align: center; border: 2px solid var(--border-color);
+      border-radius: 8px; font-weight: 600; transition: all 0.2s;
+    }
+    .toggle-option input:checked + .toggle-box { border-color: var(--primary-color); background-color: var(--bg-light); color: var(--primary-color); }
+
+    /* Estilo Opción Múltiple */
+    .radio-option {
+      display: flex; align-items: center; padding: 12px 15px; border: 1px solid var(--border-color);
+      border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: background 0.2s;
+    }
+    .radio-option:hover { background-color: #fcfcfc; border-color: #ccc; }
+    .radio-option input { margin-right: 12px; accent-color: var(--primary-color); width: 18px; height: 18px; }
+
+    /* Botones y Utilidades */
+    .actions-footer { margin-top: 35px; display: flex; gap: 15px; border-top: 1px solid var(--border-color); padding-top: 25px; }
+    .btn-submit { padding: 12px 30px; background-color: var(--primary-color); border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+    .btn-submit:hover { background-color: var(--primary-hover); }
+    .btn-back { padding: 12px 25px; background:#306E40; border: 1px solid #cccccc; border-radius: 8px; cursor: pointer; }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    #no-surveys-message {
+      text-align: center; padding: 60px; background: #f9f9f9; border-radius: 12px;
+      border: 2px dashed #ddd; color: var(--text-muted);
     }
   </style> 
 </head>
@@ -105,16 +189,20 @@
  </header>
  
   <div class="container">
+    <h1>Encuestas Disponibles</h1>
     <!-- Mensaje cuando no hay encuestas -->
-    <p id="no-surveys-message" style="display:none; color:#555;">No hay encuestas disponibles.</p>
+    <div id="no-surveys-message" style="display:none;">
+      <i class="fas fa-clipboard-list fa-3x" style="margin-bottom:15px; opacity:0.3"></i>
+      <p>No tienes encuestas pendientes en este momento.</p>
+    </div>
 
     <!-- Listado de encuestas -->
     <div id="surveys-list"><!-- Se llena dinámicamente --></div>
 
     <!-- Detalle de una encuesta seleccionada -->
-    <div id="survey-details" style="display:none; margin-top:20px;">
-      <h2 id="survey-title-display" style="margin-bottom:6px;"></h2>
-      <p id="survey-description-display" style="color:#666; margin-top:0;"></p>
+    <div id="survey-details" style="display:none;">
+      <h2 id="survey-title-display" style="color: var(--primary-color); margin-bottom: 10px;"></h2>
+      <p id="survey-description-display" style="color: var(--text-muted); margin-bottom: 30px; font-size: 1.1rem;"></p>
 
       <!-- Bloque de preguntas renderizadas -->
       <div id="questions-display" style="margin-top:16px;"></div>
@@ -123,9 +211,9 @@
       <form id="responses-form"></form>
 
       <!-- Acciones -->
-      <div style="margin-top:12px; display:flex; gap:10px;">
-        <button id="back-to-list-btn" type="button" class="btn-secondary">Volver al listado</button>
-        <button id="submit-responses-btn" type="button" class="btn-primary">Enviar respuestas</button>
+      <div class="actions-footer">
+        <button id="back-to-list-btn" type="button" class="btn-back">Volver al listado</button>
+        <button id="submit-responses-btn" type="button" class="btn-submit">Enviar mis respuestas</button>
       </div>
     </div>
   </div>
