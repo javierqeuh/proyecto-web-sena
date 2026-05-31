@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="style2.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 </head>
-<body>
+<body id="page-historia-envio">
 
   <header>
      <!-- Header -->
@@ -17,7 +17,7 @@
       <div class="company-name">ALPERCOL COMPANY</div>
     </div>
 
-    <<div class="user-panel">
+    <div class="user-panel">
       <div class="user-info">
         <p><strong>Usuario:</strong> <span id="header-user-name">Cargando...</span></p>
         <p><strong>Rol:</strong> <span id="header-user-role">...</span></p>
@@ -95,8 +95,12 @@
     
     <div class="card">
       <h3>Filtros</h3>
-      <input type="date"> a <input type="date">
-      <select><option>Todos los usuarios</option></select>
+      <input type="date" id="filter-date-start"> a <input type="date" id="filter-date-end">
+      <select id="filter-status">
+        <option value="all">Todos los estados</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="completado">Completado</option>
+      </select>
     </div>
     
     <div class="card">
