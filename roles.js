@@ -6,24 +6,25 @@
 // 1. Definición de Roles del Sistema (Evita el uso de strings sueltos en el código)
 export const ROLES = {
     ADMIN: 'administrador',
-    USUARIO: 'usuario',    // Actúa como administrador/creador en la lógica de negocio actual,
+    CREADOR: 'usuario',    // Usuario con permisos de gestión (Creador de encuestas)
     TRABAJADOR: 'trabajador'
 };
 
 // 2. Mapeo de Permisos por Funcionalidad
 // Esto facilita cambiar quién hace qué en un solo lugar
 export const PERMISOS = {
-    GESTION_USUARIOS: [ROLES.ADMIN, ROLES.USUARIO],
-    CREAR_ENCUESTAS: [ROLES.ADMIN, ROLES.USUARIO],
-    ASIGNAR_ENCUESTAS: [ROLES.ADMIN, ROLES.USUARIO],
-    VER_REPORTES: [ROLES.ADMIN, ROLES.USUARIO],
+    GESTION_USUARIOS: [ROLES.ADMIN],
+    CREAR_ENCUESTAS: [ROLES.ADMIN, ROLES.CREADOR],
+    ASIGNAR_ENCUESTAS: [ROLES.ADMIN, ROLES.CREADOR],
+    VER_REPORTES: [ROLES.ADMIN, ROLES.CREADOR],
     RESPONDER_ENCUESTAS: [ROLES.TRABAJADOR],
-    VER_NOTIFICACIONES: [ROLES.ADMIN, ROLES.USUARIO, ROLES.TRABAJADOR],
-    ver_perfil: [ROLES.ADMIN, ROLES.USUARIO, ROLES.TRABAJADOR],
-    ver_dashboard: [ROLES.ADMIN, ROLES.USUARIO, ROLES.TRABAJADOR],
-    ver_asignar_usuarios: [ROLES.ADMIN, ROLES.USUARIO],
-    "ver-historiar-envio": [ROLES.ADMIN, ROLES.USUARIO],
-    ver_revicion_respuestas: [ROLES.ADMIN, ROLES.USUARIO]
+    VER_NOTIFICACIONES: [ROLES.ADMIN, ROLES.CREADOR, ROLES.TRABAJADOR],
+    ver_perfil: [ROLES.ADMIN, ROLES.CREADOR, ROLES.TRABAJADOR],
+    ver_dashboard: [ROLES.ADMIN, ROLES.CREADOR, ROLES.TRABAJADOR],
+    ver_asignar_usuarios: [ROLES.ADMIN, ROLES.CREADOR],
+    "ver-historiar-envio": [ROLES.ADMIN, ROLES.CREADOR],
+    ver_revicion_respuestas: [ROLES.ADMIN, ROLES.CREADOR],
+    VER_RETROALIMENTACION: [ROLES.TRABAJADOR] // Nuevo permiso para el trabajador
 };
 
 /**
