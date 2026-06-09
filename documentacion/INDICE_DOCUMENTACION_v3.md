@@ -128,8 +128,7 @@ backend-alpercol/
 │   ├── VERIFICACION_INTERFACES.md        ✅ v3.0
 │   ├── DOCUMENTACION_API.md              ✅ NUEVO
 │   ├── RESUMEN_ARCHIVOS_JS.md            ✅ v3.0
-│   ├── ANALISIS_ARQUITECTURA.md          ℹ️ v2.0
-│   └── (otros documentos históricos)
+│   └── ANALISIS_ARQUITECTURA.md          ℹ️ v2.0
 │
 ├── 🌐 PÁGINAS HTML (10 interfaces)
 │   ├── index.html                        ✅ Login

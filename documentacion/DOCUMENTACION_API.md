@@ -62,7 +62,7 @@ La mayoría de los endpoints están protegidos y requieren un token JWT válido.
 
 ---
 
-## 📋 Gestión de Encuestas (Privadas)
+## 📋 Gestión de Encuestas
 
 ### 6. Crear Encuesta
 **Endpoint:** `POST /surveys`
