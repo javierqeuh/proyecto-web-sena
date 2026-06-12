@@ -280,11 +280,12 @@ border-radius: 20px;
   font-size: 40px;
 }
 .parrafo{
-  padding-top: 40px;
-color: #0c0c0c;
-font-size: 97px;
-text-align: center;
-font-weight: bold;
+  /* El margen será de 30px en móvil y crecerá hasta 60px en pantallas grandes */
+  margin-top: clamp(30px, 5vw, 60px);
+  text-align: center;
+
+  /* En móvil medirá 18px, en pantallas medianas se adapta, y en PC llegará a 36px */
+  font-size: clamp(18px, 2.5vw, 36px);
 }
 
 .respon{
