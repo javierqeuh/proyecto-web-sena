@@ -89,7 +89,24 @@ export const updateUser = async (req, res) => {
     query += ' WHERE id_usuario = ?';
     params.push(req.params.id);
 
-    await db.execute(query, params);
+    const [result] = await db.execute(query, params);
+
+    // Si el rol cambió a trabajador, asegurar que tenga entrada en la tabla trabajador
+    if (rol === 'trabajador') {
+      const [workerExists] = await db.execute('SELECT id_trabajador FROM trabajador WHERE id_usuario = ?', [req.params.id]);
+      if (workerExists.length === 0) {
+        // Recuperar datos actuales si no vienen en el body para la creación del perfil
+        const [currentUser] = await db.execute('SELECT nombre, apellidos, cedula FROM usuario WHERE id_usuario = ?', [req.params.id]);
+        const wNombre = nombre || currentUser[0].nombre;
+        const wApellido = apellidos || currentUser[0].apellidos;
+        const wCedula = cedula || currentUser[0].cedula;
+
+        await db.execute(
+          'INSERT INTO trabajador (numero_cedula, nombre, apellido, area, fecha_ingreso, id_usuario) VALUES (?, ?, ?, "Sin asignar", CURDATE(), ?)',
+          [wCedula, wNombre, wApellido, req.params.id]
+        );
+      }
+    }
 
     // Retornamos el usuario actualizado para sincronizar el estado en el frontend
     const [updatedUser] = await db.execute('SELECT id_usuario, nombre, apellidos, email, rol, foto_perfil, cedula, fecha_nacimiento FROM usuario WHERE id_usuario = ?', [req.params.id]);

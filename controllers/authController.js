@@ -82,7 +82,8 @@ export const login = async (req, res) => {
     if (!passwordMatch) return res.status(401).json({ message: 'Email o contraseña incorrectos.' });
 
     // Generación del token de sesión
-    const token = jwt.sign({ id_usuario: user.id_usuario, rol: user.rol }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '24h' });
+    // En producción, es obligatorio que JWT_SECRET esté definido en el .env
+    const token = jwt.sign({ id_usuario: user.id_usuario, rol: user.rol }, process.env.JWT_SECRET, { expiresIn: '24h' });
 
     res.status(200).json({ 
       message: 'Autenticación exitosa.',
@@ -143,11 +144,10 @@ export const forgotPassword = async (req, res) => {
     // Generación de un token criptográfico seguro (hexadecimal de 20 bytes)
     const token = crypto.randomBytes(20).toString('hex');
     // Definición de expiración: El token será válido solo por 1 hora
-    const expireDate = new Date(Date.now() + 3600000); 
+    const expireDate = new Date(Date.now() + 3600000).toISOString().slice(0, 19).replace('T', ' '); 
 
-    // Nota: Aquí deberías guardar el token y la fecha en la tabla 'usuario'
-    // 3. Guardar token en la DB (MySQL)
-    // await db.execute('UPDATE usuario SET reset_token = ?, reset_expires = ? WHERE id_usuario = ?', [token, expireDate, user.id_usuario]);
+    // Guardar token en la DB
+    await db.execute('UPDATE usuario SET reset_token = ?, reset_expires = ? WHERE id_usuario = ?', [token, expireDate, user.id_usuario]);
 
     // 4. Construir el enlace de reseteo
     const resetUrl = `http://localhost:3001/reset-password?token=${token}`;
@@ -175,19 +175,18 @@ export const resetPassword = async (req, res) => {
   const { token, newPassword } = req.body;
 
   try {
-    // Lógica para validar el token contra la base de datos y la fecha actual
-    // const [users] = await db.execute('SELECT * FROM usuario WHERE reset_token = ? AND reset_expires > NOW()', [token]);
+    // Validar token y expiración
+    const [users] = await db.execute('SELECT id_usuario FROM usuario WHERE reset_token = ? AND reset_expires > NOW()', [token]);
 
-    // if (users.length === 0) {
-    //   return res.status(400).json({ message: "Token inválido o ha expirado." });
-    // }
-    // const user = users[0];
+    if (users.length === 0) {
+      return res.status(400).json({ message: "Token inválido o ha expirado." });
+    }
+    const user = users[0];
 
-    // 2. Actualizar contraseña
-    // const hashedPassword = await bcrypt.hash(newPassword, 10);
-    // await db.execute('UPDATE usuario SET password_hash = ?, reset_token = NULL, reset_expires = NULL WHERE id_usuario = ?', [hashedPassword, user.id_usuario]);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await db.execute('UPDATE usuario SET password_hash = ?, reset_token = NULL, reset_expires = NULL WHERE id_usuario = ?', [hashedPassword, user.id_usuario]);
 
-    res.status(200).json({ message: "Contraseña actualizada con éxito (Simulado)." });
+    res.status(200).json({ message: "Contraseña actualizada con éxito." });
 
   } catch (error) {
     console.error(error);

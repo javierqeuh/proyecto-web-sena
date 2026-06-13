@@ -163,6 +163,12 @@ export const saveResponses = async (req, res) => {
     const [qRows] = await connection.execute('SELECT id_pregunta, tipo FROM pregunta WHERE id_encuesta = ?', [surveyId]);
     const typeMap = new Map(qRows.map(row => [row.id_pregunta, row.tipo]));
 
+    // Validar fecha límite antes de guardar
+    const [limitCheck] = await connection.execute('SELECT fecha_limite FROM encuesta WHERE id_encuesta = ?', [surveyId]);
+    if (limitCheck[0].fecha_limite && new Date(limitCheck[0].fecha_limite) < new Date()) {
+      await connection.rollback(); return res.status(403).json({ message: 'La encuesta ha expirado.' });
+    }
+
     for (const r of responses) {
       const tipo = typeMap.get(r.id_pregunta);
       if (!tipo) { await connection.rollback(); return res.status(400).json({ message: `Pregunta inválida: ${r.id_pregunta}` }); }
@@ -211,6 +217,13 @@ export const assignSurvey = async (req, res) => {
   let connection;
   try {
     connection = await db.getConnection();
+    
+    // Validar si la encuesta ha expirado
+    const [surveyStatus] = await connection.execute('SELECT fecha_limite FROM encuesta WHERE id_encuesta = ?', [id_encuesta]);
+    if (surveyStatus.length > 0 && surveyStatus[0].fecha_limite && new Date(surveyStatus[0].fecha_limite) < new Date()) {
+      return res.status(403).json({ message: 'La encuesta ha expirado y ya no acepta respuestas.' });
+    }
+
     await connection.beginTransaction();
 
     const [surveyRows] = await connection.execute('SELECT titulo FROM encuesta WHERE id_encuesta = ?', [id_encuesta]);
@@ -267,4 +280,3 @@ export const addAssignmentComment = async (req, res) => {
     res.status(500).json({ message: 'Error al agregar comentario.' });
   }
 };
-
