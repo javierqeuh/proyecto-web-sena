@@ -102,7 +102,7 @@ Este documento define los estándares, protocolos y mecanismos de seguridad requ
 | **JWT** | ✅ Implementado | Mover a Cookies HttpOnly. |
 | **Bcrypt** | ✅ Implementado | Mantener cost factor actualizado. |
 | **SQL Injection** | ✅ Protegido | Mantener uso de `?` en queries. |
-| **Rate Limiting** | ❌ No existe | Instalar `express-rate-limit`. |
-| **Secure Headers** | ❌ No existe | Instalar `helmet`. |
-| **HTTPS** | ❌ Localhost | Configurar en despliegue/proxy inverso. |
+| **Rate Limiting** | ✅ Implementado | Configurado en `server.js` para rutas sensibles. |
+| **Secure Headers** | ✅ Implementado | Uso de `helmet` configurado en `server.js`. |
+| **HTTPS** | ✅ Documentado | Configurado mediante Proxy Inverso (Nginx) para producción. |
 | **Validación Input** | ⚠️ Parcial | Reforzar validación en Backend. |

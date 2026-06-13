@@ -112,7 +112,8 @@ export const getMe = async (req, res) => {
     res.json({ user: rows[0] });
   } catch (error) {
     console.error('Error al obtener usuario actual:', error);
-    res.status(500).json({ message: 'Error del servidor.' });
+    // Mensaje genérico para no exponer detalles de la BD
+    res.status(500).json({ message: 'Error al procesar la solicitud de perfil.' });
   }
 };
 

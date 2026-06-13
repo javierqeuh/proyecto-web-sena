@@ -5,6 +5,8 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
 import dotenv from 'dotenv'; // Import dotenv
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import db from './config/db.js'; // Import the database pool from db.js
 import apiRoutes from './routes/index.js';
 import * as authController from './controllers/authController.js';
@@ -16,23 +18,42 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = 3001;
 
+// Confiar en el proxy inverso (Nginx) para manejar HTTPS e IPs reales
+app.set('trust proxy', 1);
+
 // 1. Configuración de variables de entorno
 dotenv.config({ path: path.join(__dirname, 'config', '.env') }); // Cargar variables de entorno desde la carpeta config
 
-// 2. Middlewares Generales
-app.use(cors());
+// 2. Middlewares de Seguridad y Generales
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+      fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'", "http://localhost:*", "https://*"]
+    }
+  }
+}));
+
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : 'http://localhost:3000',
+  credentials: true
+}));
+
 app.use(express.json());
 
-
-// 3. Configuración de Seguridad (CSP)
-// Permite scripts propios, estilos en línea y conexiones a localhost (soluciona el error de DevTools)
-app.use((req, res, next) => {
-  res.setHeader(
-    'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src 'self' http://localhost:*"
-  );
-  next();
+// 3. Limitación de Tasa (Rate Limiting) para rutas sensibles
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // límite de 100 peticiones por IP
+  message: { message: 'Demasiadas peticiones desde esta IP, intente de nuevo más tarde.' }
 });
+
+app.use('/login', apiLimiter);
+app.use('/api/registro', apiLimiter);
 
 // 4. Redirección automática de .htm a .html
 app.use((req, res, next) => {
