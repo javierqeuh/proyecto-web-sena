@@ -13,14 +13,14 @@ export const ROLES = {
 // 2. Mapeo de Permisos por Funcionalidad
 // Esto facilita cambiar quién hace qué en un solo lugar
 export const PERMISOS = {
-    GESTION_USUARIOS: [ROLES.ADMIN],
+    GESTION_USUARIOS: [ROLES.ADMIN, ROLES.CREADOR],
     CREAR_ENCUESTAS: [ROLES.ADMIN, ROLES.CREADOR],
     ASIGNAR_ENCUESTAS: [ROLES.ADMIN, ROLES.CREADOR],
     VER_REPORTES: [ROLES.ADMIN, ROLES.CREADOR],
     RESPONDER_ENCUESTAS: [ROLES.TRABAJADOR],
     VER_NOTIFICACIONES: [ROLES.ADMIN, ROLES.CREADOR, ROLES.TRABAJADOR],
     ver_perfil: [ROLES.ADMIN, ROLES.CREADOR, ROLES.TRABAJADOR],
-    ver_dashboard: [ROLES.ADMIN, ROLES.CREADOR, ROLES.TRABAJADOR],
+    ver_dashboard: [ROLES.ADMIN, ROLES.CREADOR],
     ver_asignar_usuarios: [ROLES.ADMIN, ROLES.CREADOR],
     "ver-historiar-envio": [ROLES.ADMIN, ROLES.CREADOR],
     ver_revicion_respuestas: [ROLES.ADMIN, ROLES.CREADOR],
